@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musicsharing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDd8fHJ1bm5pbmd8ZW58MHx8fHwxNjg5MTM4MjA4&ixlib=rb-1.2.1&q=80&w=1080');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 20px;
+            color: white; /* Đổi màu chữ sang trắng để dễ đọc */
+        }
+        header {
+            background-color: rgba(128, 128, 128, 0.8); /* Màu xám */
+            padding: 10px;
+            text-align: left;
+        }
+        h1 {
+            margin: 0;
+            font-style: italic; /* Đặt kiểu chữ nghiêng */
+        }
+        #search-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        #search-input {
+            padding: 10px;
+            border: 2px solid #ff4757;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+            background-color: rgba(255, 255, 255, 0.8); /* Nền trong suốt */
+        }
+        #search-input:focus {
+            border-color: #ff6b81;
+            outline: none;
+        }
+        #upload-form {
+            margin: 20px auto;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7); /* Nền mờ */
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #music-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            list-style-type: none;
+            padding: 0;
+        }
+        .music-item {
+            background-color: rgba(255, 255, 255, 0.9); /* Nền trong suốt cho item */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            text-align: center;
+        }
+        audio {
+            width: 100%;
+            border-radius: 4px;
+        }
+        .upload-button {
+            padding: 10px 20px;
+            background-color: #ff4757;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-button:hover {
+            background-color: #ff6b81;
+        }
+        .music-title, .music-author {
+            margin: 10px 0;
+            font-weight: bold;
+            color: black; /* Đổi màu chữ thành đen */
+        }
+        .delete-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #e74c3c;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .delete-button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Musicsharing</h1>
+    </header>
+    <div id="search-bar">
+        <input type="text" id="search-input" placeholder="Tìm kiếm bài hát..." oninput="searchMusic()">
+    </div>
+    <div id="upload-form">
+        <input type="file" id="file-input" accept="audio/*">
+        <input type="text" id="title-input" placeholder="Tiêu đề bài hát">
+        <input type="text" id="author-input" placeholder="Tên tác giả (tiếng Việt)">
+        <button class="upload-button" onclick="uploadMusic()">Tải lên</button>
+    </div>
+    <ul id="music-list"></ul>
+
+    <script>
+        const musicItems = [];
+
+        function isVietnamese(text) {
+            const vietnameseRegex = /^[\u00C0-\u1EF9a-zA-Z0-9\s]+$/; // Kiểm tra ký tự tiếng Việt
+            return vietnameseRegex.test(text);
+        }
+
+        function uploadMusic() {
+            const fileInput = document.getElementById('file-input');
+            const titleInput = document.getElementById('title-input');
+            const authorInput = document.getElementById('author-input');
+            const musicList = document.getElementById('music-list');
+
+            if (fileInput.files.length > 0 && titleInput.value.trim() !== '' && authorInput.value.trim() !== '') {
+                const file = fileInput.files[0];
+                const title = titleInput.value.trim();
+                const author = authorInput.value.trim();
+
+                // Kiểm tra tên tác giả có phải tiếng Việt không
+                if (!isVietnamese(author)) {
+                    alert('Tên tác giả phải sử dụng ký tự tiếng Việt.');
+                    return;
+                }
+
+                const listItem = document.createElement('li');
+                listItem.className = 'music-item';
+
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = URL.createObjectURL(file);
+                listItem.appendChild(audio);
+
+                const musicTitle = document.createElement('div');
+                musicTitle.className = 'music-title';
+                musicTitle.textContent = title;
+                listItem.appendChild(musicTitle);
+
+                const musicAuthor = document.createElement('div');
+                musicAuthor.className = 'music-author';
+                musicAuthor.textContent = 'Tác giả: ' + author;
+                listItem.appendChild(musicAuthor);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-button';
+                deleteButton.textContent = 'Xóa';
+                deleteButton.onclick = () => {
+                    musicList.removeChild(listItem);
+                    const index = musicItems.findIndex(item => item.title === title && item.author === author);
+                    if (index > -1) {
+                        musicItems.splice(index, 1); // Xóa bài hát khỏi danh sách
+                    }
+                };
+                listItem.appendChild(deleteButton);
+                
+                musicList.appendChild(listItem);
+                musicItems.push({ title, author, file }); // Lưu thông tin bài hát
+
+                fileInput.value = ''; // Reset file input
+                titleInput.value = ''; // Reset title input
+                authorInput.value = ''; // Reset author input
+            } else {
+                alert('Vui lòng chọn một bài hát, nhập tiêu đề và tên tác giả.');
+            }
+        }
+
+        function searchMusic() {
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            const musicList = document.getElementById('music-list');
+            musicList.innerHTML = ''; // Xóa danh sách hiện tại
+
+            musicItems.forEach(item => {
+                if (item.title.toLowerCase().includes(searchInput) || item.author.toLowerCase().includes(searchInput)) {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'music-item';
+
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = URL.createObjectURL(item.file);
+                    listItem.appendChild(audio);
+
+                    const musicTitle = document.createElement('div');
+                    musicTitle.className = 'music-title';
+                    musicTitle.textContent = item.title;
+                    listItem.appendChild(musicTitle);
+
+                    const musicAuthor = document.createElement('div');
+                    musicAuthor.className = 'music-author';
+                    musicAuthor.textContent = 'Tác giả: ' + item.author;
+                    listItem.appendChild(musicAuthor);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-button';
+                    deleteButton.textContent = 'Xóa';
+                    deleteButton.onclick = () => {
+                        musicList.removeChild(listItem);
+                        const index = musicItems.findIndex(i => i.title === item.title && i.author === item.author);
+                        if (index > -1) {
+                            musicItems.splice(index, 1); // Xóa bài hát khỏi danh sách
+                        }
+                    };
+                    listItem.appendChild(deleteButton);
+
+                    musicList.appendChild(listItem);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
